@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Live View Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Live View Tracker</h1>
+
+    <label>Video ID:</label>
+    <input type="text" id="videoId" placeholder="Enter YouTube Video ID">
+
+    <label>Target Views:</label>
+    <input type="number" id="targetViews" placeholder="Enter Target Views">
+
+    <label>Target Time:</label>
+    <input type="datetime-local" id="targetTime">
+
+    <label>First Spike Time:</label>
+    <input type="datetime-local" id="firstSpikeTime" step="1">
+
+    <label>Spike Interval (minutes):</label>
+    <input type="number" id="spikeInterval" placeholder="e.g. 5">
+
+    <button onclick="startTracking()">Start Tracking</button>
+
+    <div class="stats">
+      <p>Live View Count: <span id="liveViews">-</span></p>
+
+      <table class="statTable">
+        <thead>
+          <tr>
+            <th>Time Window</th>
+            <th>Total Views</th>
+            <th>Avg/Min</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Last 5 Min</td><td id="last5Min">-</td><td id="avg5Min">-</td></tr>
+          <tr><td>Last 10 Min</td><td id="last10Min">-</td><td id="avg10Min">-</td></tr>
+          <tr><td>Last 15 Min</td><td id="last15Min">-</td><td id="avg15Min">-</td></tr>
+          <tr><td>Last 20 Min</td><td id="last20Min">-</td><td id="avg20Min">-</td></tr>
+          <tr><td>Last 25 Min</td><td id="last25Min">-</td><td id="avg25Min">-</td></tr>
+          <tr><td>Last 30 Min</td><td id="last30Min">-</td><td id="avg30Min">-</td></tr>
+        </tbody>
+      </table>
+
+      <p>Views Left to Meet Target: <span id="viewsLeft" class="neutral">-</span></p>
+      <p>Required Rate (per min): <span id="requiredRate">-</span></p>
+      <p>Required Views (next 5 mins): <span id="requiredNext5">-</span></p>
+      <p>Projected Views: <span id="projectedViews">-</span></p>
+      <p>Will Target Be Met? <span id="forecast">-</span></p>
+      <p>Time Left: <span id="timeLeft">-</span></p>
+      <p>Risk Meter: <span id="riskMeter" class="neutral">-</span></p>
+      <p>Upcoming Spike Times & Required Views:</p>
+      <ul id="spikeList"></ul>
+    </div>
+
+    <canvas id="viewChart" height="100"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
