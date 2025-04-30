@@ -163,3 +163,99 @@ function updateRiskMeter(avgRate, requiredRate) {
   fill.style.width = `${Math.min(percent, 100)}%`;
   fill.style.backgroundColor = color;
 }
+// ... keep existing declarations and functions ...
+
+function updateStats() {
+  fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`)
+    .then(res => res.json())
+    .then(data => {
+      const viewCount = parseInt(data.items[0].statistics.viewCount);
+      const currentTime = new Date();
+
+      const timeLeftMinutes = Math.max(0, Math.floor((endTime - currentTime) / 60000));
+
+      chartLabels.push(currentTime.toLocaleTimeString());
+      chartData.push(viewCount);
+      chart.update();
+
+      const last5 = getViewDiff(30);
+      const last10 = getViewDiff(60);
+      const last15 = getViewDiff(90);
+      const last20 = getViewDiff(120);
+      const last25 = getViewDiff(150);
+      const last30 = getViewDiff(180);
+      const avg15 = last15 / 15;
+
+      const viewsLeft = Math.max(0, targetViews - viewCount);
+      const requiredRate = timeLeftMinutes > 0 ? viewsLeft / timeLeftMinutes : 0;
+      const requiredNext5 = requiredRate * 5;
+      const projectedViews = Math.floor(viewCount + (last5 / 5 * timeLeftMinutes));
+      const forecast = projectedViews >= targetViews ? "Yes" : "No";
+
+      document.getElementById("liveViews").innerText = viewCount.toLocaleString();
+      document.getElementById("last5Min").innerText = last5.toLocaleString();
+      document.getElementById("last10Min").innerText = last10.toLocaleString();
+      document.getElementById("last15Min").innerText = last15.toLocaleString();
+      document.getElementById("last20Min").innerText = last20.toLocaleString();
+      document.getElementById("last25Min").innerText = last25.toLocaleString();
+      document.getElementById("last30Min").innerText = last30.toLocaleString();
+      document.getElementById("avg15Min").innerText = avg15.toFixed(2);
+      document.getElementById("requiredRate").innerText = requiredRate.toFixed(2);
+      document.getElementById("requiredNext5").innerText = Math.round(requiredNext5).toLocaleString();
+      document.getElementById("projectedViews").innerText = projectedViews.toLocaleString();
+      document.getElementById("forecast").innerText = forecast;
+      document.getElementById("timeLeft").innerText = `${timeLeftMinutes}:${(60 - currentTime.getSeconds()).toString().padStart(2, "0")}`;
+
+      const viewsLeftEl = document.getElementById("viewsLeft");
+      viewsLeftEl.innerText = viewsLeft.toLocaleString();
+      viewsLeftEl.className = forecast === "Yes" ? "green" : "red";
+
+      updateSpikeList(currentTime, viewCount, viewsLeft);
+      updateRiskMeter(avg15, requiredRate);
+    })
+    .catch(error => console.error("Error fetching YouTube data:", error));
+}
+
+function getViewDiff(pointsBack) {
+  const idx = chartData.length - pointsBack;
+  return idx >= 0 ? chartData[chartData.length - 1] - chartData[idx] : 0;
+}
+
+function updateRiskMeter(avgRate, requiredRate) {
+  if (requiredRate === 0) {
+    document.getElementById("riskText").innerText = "Super Safe (∞%)";
+    document.getElementById("riskBarFill").style.width = "100%";
+    document.getElementById("riskBarFill").style.backgroundColor = "green";
+    return;
+  }
+
+  const percentage = (avgRate / requiredRate) * 100;
+  const fill = Math.min(percentage, 100);
+  let text = "";
+  let color = "";
+
+  if (percentage <= 10) {
+    text = `Very Risky (${percentage.toFixed(1)}%)`;
+    color = "red";
+  } else if (percentage <= 30) {
+    text = `Risky (${percentage.toFixed(1)}%)`;
+    color = "orange";
+  } else if (percentage <= 50) {
+    text = `Moderate (${percentage.toFixed(1)}%)`;
+    color = "gold";
+  } else if (percentage <= 70) {
+    text = `Safe (${percentage.toFixed(1)}%)`;
+    color = "lightgreen";
+  } else if (percentage <= 100) {
+    text = `Very Safe (${percentage.toFixed(1)}%)`;
+    color = "green";
+  } else {
+    text = `Super Safe (${percentage.toFixed(1)}%)`;
+    color = "darkgreen";
+  }
+
+  document.getElementById("riskText").innerText = text;
+  const bar = document.getElementById("riskBarFill");
+  bar.style.width = `${fill}%`;
+  bar.style.backgroundColor = color;
+}
