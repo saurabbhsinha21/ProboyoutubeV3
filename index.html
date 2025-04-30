@@ -28,25 +28,35 @@
     <button onclick="startTracking()">Start Tracking</button>
 
     <div class="stats">
-      <table class="stats-table">
-        <tr><td>Live View Count:</td><td id="liveViews">-</td></tr>
-        <tr><td>Last 5 Min Views:</td><td id="last5Min">-</td></tr>
-        <tr><td>Last 10 Min Views:</td><td id="last10Min">-</td></tr>
-        <tr><td>Last 15 Min Views:</td><td id="last15Min">-</td></tr>
-        <tr><td>Last 20 Min Views:</td><td id="last20Min">-</td></tr>
-        <tr><td>Last 25 Min Views:</td><td id="last25Min">-</td></tr>
-        <tr><td>Last 30 Min Views:</td><td id="last30Min">-</td></tr>
-        <tr><td>Avg Per Min (15 Min):</td><td id="avg15Min">-</td></tr>
-        <tr><td>Views Left to Meet Target:</td><td id="viewsLeft" class="neutral">-</td></tr>
-        <tr><td>Required Rate (per min):</td><td id="requiredRate">-</td></tr>
-        <tr><td>Required Views (next 5 mins):</td><td id="requiredNext5">-</td></tr>
-        <tr><td>Projected Views:</td><td id="projectedViews">-</td></tr>
-        <tr><td>Will Target Be Met?</td><td id="forecast">-</td></tr>
-        <tr><td>Time Left:</td><td id="timeLeft">-</td></tr>
-        <tr><td>Risk Meter:</td><td><span id="riskLabel">-</span><div class="risk-bar"><div id="riskFill"></div></div></td></tr>
+      <table>
+        <tbody>
+          <tr><td>Live View Count:</td><td id="liveViews">-</td></tr>
+          <tr><td>Last 5 Min Views:</td><td id="last5Min">-</td></tr>
+          <tr><td>Last 10 Min Views:</td><td id="last10Min">-</td></tr>
+          <tr><td>Last 15 Min Views:</td><td id="last15Min">-</td></tr>
+          <tr><td>Last 20 Min Views:</td><td id="last20Min">-</td></tr>
+          <tr><td>Last 25 Min Views:</td><td id="last25Min">-</td></tr>
+          <tr><td>Last 30 Min Views:</td><td id="last30Min">-</td></tr>
+          <tr><td>Avg Per Min (15 Min):</td><td id="avg15Min">-</td></tr>
+          <tr><td>Views Left to Meet Target:</td><td id="viewsLeft" class="neutral">-</td></tr>
+          <tr><td>Required Rate (per min):</td><td id="requiredRate">-</td></tr>
+          <tr><td>Required Views (next 5 mins):</td><td id="requiredNext5">-</td></tr>
+          <tr><td>Projected Views:</td><td id="projectedViews">-</td></tr>
+          <tr><td>Will Target Be Met?</td><td id="forecast">-</td></tr>
+          <tr><td>Time Left:</td><td id="timeLeft">-</td></tr>
+          <tr>
+            <td>Risk Meter:</td>
+            <td>
+              <span id="riskText">-</span>
+              <div class="risk-bar">
+                <div id="riskBarFill"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
       </table>
 
-      <p>Upcoming Spike Times & Required Views:</p>
+      <h3>Upcoming Spike Times & Required Views:</h3>
       <ul id="spikeList"></ul>
     </div>
 
