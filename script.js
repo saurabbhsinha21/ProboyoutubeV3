@@ -138,31 +138,45 @@ function updateSpikeList(currentTime, currentViews, viewsLeft) {
   });
 }
 
-function updateRiskMeter(avgRate, requiredRate) {
-  const percent = (avgRate / requiredRate) * 100;
-  const fill = document.getElementById("riskFill");
+function updateRiskMeter(avg15, requiredRate) {
+  let diffPercent = ((avg15 - requiredRate) / requiredRate) * 100;
+  diffPercent = isFinite(diffPercent) ? diffPercent : 0;
+
+  const bar = document.getElementById("riskBar");
   const label = document.getElementById("riskLabel");
 
-  let riskText = "", color = "red";
+  let color = "gray", status = "Unknown";
 
-  if (percent <= 10) {
-    riskText = `Very Risky (${percent.toFixed(1)}%)`; color = "red";
-  } else if (percent <= 30) {
-    riskText = `Risky (${percent.toFixed(1)}%)`; color = "orange";
-  } else if (percent <= 50) {
-    riskText = `Moderate (${percent.toFixed(1)}%)`; color = "gold";
-  } else if (percent <= 70) {
-    riskText = `Safe (${percent.toFixed(1)}%)`; color = "lightgreen";
-  } else if (percent <= 100) {
-    riskText = `Very Safe (${percent.toFixed(1)}%)`; color = "green";
+  const absDiff = Math.abs(diffPercent);
+
+  if (absDiff <= 10) {
+    status = "Very Risky";
+    color = "red";
+  } else if (absDiff <= 30) {
+    status = "Risky";
+    color = "orange";
+  } else if (absDiff <= 50) {
+    status = "Moderate";
+    color = "yellow";
+  } else if (absDiff <= 70) {
+    status = "Safe";
+    color = "lightgreen";
+  } else if (absDiff <= 100) {
+    status = "Very Safe";
+    color = "green";
   } else {
-    riskText = `Super Safe (${percent.toFixed(1)}%)`; color = "darkgreen";
+    status = "Super Safe";
+    color = "darkgreen";
   }
 
-  label.textContent = riskText;
-  fill.style.width = `${Math.min(percent, 100)}%`;
-  fill.style.backgroundColor = color;
+  // Ensure bar stays within 0-100%
+  const barWidth = Math.min(Math.abs(diffPercent), 100);
+
+  bar.style.width = `${barWidth}%`;
+  bar.style.backgroundColor = color;
+  label.innerHTML = `<strong>${status}</strong> (${diffPercent.toFixed(1)}%)`;
 }
+
 // ... keep existing declarations and functions ...
 
 function updateStats() {
