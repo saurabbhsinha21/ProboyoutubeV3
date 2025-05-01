@@ -53,15 +53,8 @@ button:hover {
   background-color: #0056b3;
 }
 
-.stats table {
-  width: 100%;
-  border-collapse: collapse;
+.stats {
   margin-top: 20px;
-}
-
-.stats td {
-  padding: 6px 10px;
-  vertical-align: top;
 }
 
 #viewsLeft.green {
@@ -78,17 +71,40 @@ button:hover {
   color: black;
 }
 
-.risk-bar {
+table {
   width: 100%;
-  height: 12px;
-  background-color: #ddd;
-  border-radius: 8px;
-  margin-top: 6px;
-  overflow: hidden;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-#riskBarFill {
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+  text-align: left;
+}
+
+/* 🟢 Risk Meter Styles */
+#riskMeterContainer {
+  margin-top: 20px;
+}
+
+#riskMeterBar {
+  width: 100%;
+  height: 25px;
+  background-color: #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+#riskLevel {
   height: 100%;
-  width: 0%;
-  transition: width 0.5s;
+  width: 100%;
+  background-color: green;
+  transition: background-color 0.5s ease;
 }
