@@ -29,10 +29,12 @@ function startTracking() {
   endTime = new Date(targetTimeString);
   spikeStartTime = new Date(firstSpikeTimeString);
 
-  if (!chart) initChart();
+  if (!chart) {
+    initChart();
+  }
 
   updateStats();
-  interval = setInterval(updateStats, 10000); // every 10 seconds
+  interval = setInterval(updateStats, 10000);
 }
 
 function initChart() {
@@ -65,39 +67,46 @@ function updateStats() {
     .then(data => {
       const viewCount = parseInt(data.items[0].statistics.viewCount);
       const currentTime = new Date();
+
       const timeLeftMinutes = Math.max(0, Math.floor((endTime - currentTime) / 60000));
 
       chartLabels.push(currentTime.toLocaleTimeString());
       chartData.push(viewCount);
       chart.update();
 
-      const last5 = getViewsDiffByDataPoints(30);
-      const last10 = getViewsDiffByDataPoints(60);
-      const last15 = getViewsDiffByDataPoints(90);
-      const last20 = getViewsDiffByDataPoints(120);
-      const last25 = getViewsDiffByDataPoints(150);
-      const last30 = getViewsDiffByDataPoints(180);
+      const stats = {
+        5: getViewsDiffByPoints(30),
+        10: getViewsDiffByPoints(60),
+        15: getViewsDiffByPoints(90),
+        20: getViewsDiffByPoints(120),
+        25: getViewsDiffByPoints(150),
+        30: getViewsDiffByPoints(180),
+      };
+
+      for (const [min, views] of Object.entries(stats)) {
+        const rate = views / (min / 5);
+        document.getElementById(`last${min}Min`).innerText = views.toLocaleString();
+        document.getElementById(`rate${min}Min`).innerText = `${views.toLocaleString()} / ${min / 5} = ${rate.toFixed(1)}`;
+      }
+
+      const last15 = stats[15];
       const avg15 = last15 / 15;
 
       const viewsLeft = Math.max(0, targetViews - viewCount);
       const requiredRate = timeLeftMinutes > 0 ? viewsLeft / timeLeftMinutes : 0;
       const requiredNext5 = requiredRate * 5;
-      const projectedViews = Math.floor(viewCount + (last5 / 5 * timeLeftMinutes));
+      const projectedViews = Math.floor(viewCount + ((stats[5] / 5) * timeLeftMinutes));
       const forecast = projectedViews >= targetViews ? "Yes" : "No";
 
       document.getElementById("liveViews").innerText = viewCount.toLocaleString();
-      document.getElementById("last5Min").innerText = `${last5.toLocaleString()} | ${(last5/1).toFixed(1)}`;
-      document.getElementById("last10Min").innerText = `${last10.toLocaleString()} | ${(last10/2).toFixed(1)}`;
-      document.getElementById("last15Min").innerText = `${last15.toLocaleString()} | ${(last15/3).toFixed(1)}`;
-      document.getElementById("last20Min").innerText = `${last20.toLocaleString()} | ${(last20/4).toFixed(1)}`;
-      document.getElementById("last25Min").innerText = `${last25.toLocaleString()} | ${(last25/5).toFixed(1)}`;
-      document.getElementById("last30Min").innerText = `${last30.toLocaleString()} | ${(last30/6).toFixed(1)}`;
       document.getElementById("avg15Min").innerText = avg15.toFixed(2);
       document.getElementById("requiredRate").innerText = requiredRate.toFixed(2);
       document.getElementById("requiredNext5").innerText = Math.round(requiredNext5).toLocaleString();
       document.getElementById("projectedViews").innerText = projectedViews.toLocaleString();
       document.getElementById("forecast").innerText = forecast;
-      document.getElementById("timeLeft").innerText = `${timeLeftMinutes}:${(60 - currentTime.getSeconds()).toString().padStart(2, "0")}`;
+
+      const timeLeftString = `${timeLeftMinutes}:${(60 - currentTime.getSeconds()).toString().padStart(2, "0")}`;
+      document.getElementById("timeLeft").innerText = timeLeftString;
 
       const viewsLeftEl = document.getElementById("viewsLeft");
       viewsLeftEl.innerText = viewsLeft.toLocaleString();
@@ -105,14 +114,53 @@ function updateStats() {
       viewsLeftEl.classList.add(forecast === "Yes" ? "green" : "red");
 
       updateSpikeList(currentTime, viewCount, viewsLeft);
-      updateRiskMeter(avg15, requiredRate);
+
+      // 🟢 RISK METER LOGIC
+      const riskDiff = avg15 - requiredRate;
+      const riskPercent = Math.abs(riskDiff / requiredRate) * 100;
+
+      const riskLevelEl = document.getElementById("riskLevel");
+      const riskLabelEl = document.getElementById("riskLabel");
+
+      let riskText = "";
+      let riskColor = "green";
+
+      if (riskPercent <= 10) {
+        riskText = "Very Risky";
+        riskColor = "red";
+      } else if (riskPercent <= 20) {
+        riskText = "Risky";
+        riskColor = "red";
+      } else if (riskPercent <= 30) {
+        riskText = "Mild Risky";
+        riskColor = "yellow";
+      } else if (riskPercent <= 40) {
+        riskText = "Moderate";
+        riskColor = "yellow";
+      } else if (riskPercent <= 70) {
+        riskText = "Safe";
+        riskColor = "green";
+      } else if (riskPercent <= 100) {
+        riskText = "Very Safe";
+        riskColor = "green";
+      } else {
+        riskText = "Super Safe";
+        riskColor = "green";
+      }
+
+      riskLevelEl.style.backgroundColor = riskColor;
+      riskLabelEl.innerText = `${riskText} (${riskPercent.toFixed(1)}%)`;
+
     })
-    .catch(error => console.error("Error fetching YouTube data:", error));
+    .catch(error => {
+      console.error("Error fetching YouTube data:", error);
+    });
 }
 
-function getViewsDiffByDataPoints(points) {
-  const index = chartData.length - points;
-  return index >= 0 ? chartData[chartData.length - 1] - chartData[index] : 0;
+function getViewsDiffByPoints(nPoints) {
+  return chartData.length > nPoints
+    ? chartData[chartData.length - 1] - chartData[chartData.length - 1 - nPoints]
+    : 0;
 }
 
 function updateSpikeList(currentTime, currentViews, viewsLeft) {
@@ -136,140 +184,4 @@ function updateSpikeList(currentTime, currentViews, viewsLeft) {
     li.textContent = `${spike.toLocaleTimeString()} - ${viewsPerSpike.toLocaleString()} views required`;
     spikeList.appendChild(li);
   });
-}
-
-function updateRiskMeter(avg15, requiredRate) {
-  let diffPercent = ((avg15 - requiredRate) / requiredRate) * 100;
-  diffPercent = isFinite(diffPercent) ? diffPercent : 0;
-
-  const bar = document.getElementById("riskBar");
-  const label = document.getElementById("riskLabel");
-
-  let color = "gray", status = "Unknown";
-
-  const absDiff = Math.abs(diffPercent);
-
-  if (absDiff <= 10) {
-    status = "Very Risky";
-    color = "red";
-  } else if (absDiff <= 30) {
-    status = "Risky";
-    color = "orange";
-  } else if (absDiff <= 50) {
-    status = "Moderate";
-    color = "yellow";
-  } else if (absDiff <= 70) {
-    status = "Safe";
-    color = "lightgreen";
-  } else if (absDiff <= 100) {
-    status = "Very Safe";
-    color = "green";
-  } else {
-    status = "Super Safe";
-    color = "darkgreen";
-  }
-
-  // Ensure bar stays within 0-100%
-  const barWidth = Math.min(Math.abs(diffPercent), 100);
-
-  bar.style.width = `${barWidth}%`;
-  bar.style.backgroundColor = color;
-  label.innerHTML = `<strong>${status}</strong> (${diffPercent.toFixed(1)}%)`;
-}
-
-// ... keep existing declarations and functions ...
-
-function updateStats() {
-  fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`)
-    .then(res => res.json())
-    .then(data => {
-      const viewCount = parseInt(data.items[0].statistics.viewCount);
-      const currentTime = new Date();
-
-      const timeLeftMinutes = Math.max(0, Math.floor((endTime - currentTime) / 60000));
-
-      chartLabels.push(currentTime.toLocaleTimeString());
-      chartData.push(viewCount);
-      chart.update();
-
-      const last5 = getViewDiff(30);
-      const last10 = getViewDiff(60);
-      const last15 = getViewDiff(90);
-      const last20 = getViewDiff(120);
-      const last25 = getViewDiff(150);
-      const last30 = getViewDiff(180);
-      const avg15 = last15 / 15;
-
-      const viewsLeft = Math.max(0, targetViews - viewCount);
-      const requiredRate = timeLeftMinutes > 0 ? viewsLeft / timeLeftMinutes : 0;
-      const requiredNext5 = requiredRate * 5;
-      const projectedViews = Math.floor(viewCount + (last5 / 5 * timeLeftMinutes));
-      const forecast = projectedViews >= targetViews ? "Yes" : "No";
-
-      document.getElementById("liveViews").innerText = viewCount.toLocaleString();
-      document.getElementById("last5Min").innerText = last5.toLocaleString();
-      document.getElementById("last10Min").innerText = last10.toLocaleString();
-      document.getElementById("last15Min").innerText = last15.toLocaleString();
-      document.getElementById("last20Min").innerText = last20.toLocaleString();
-      document.getElementById("last25Min").innerText = last25.toLocaleString();
-      document.getElementById("last30Min").innerText = last30.toLocaleString();
-      document.getElementById("avg15Min").innerText = avg15.toFixed(2);
-      document.getElementById("requiredRate").innerText = requiredRate.toFixed(2);
-      document.getElementById("requiredNext5").innerText = Math.round(requiredNext5).toLocaleString();
-      document.getElementById("projectedViews").innerText = projectedViews.toLocaleString();
-      document.getElementById("forecast").innerText = forecast;
-      document.getElementById("timeLeft").innerText = `${timeLeftMinutes}:${(60 - currentTime.getSeconds()).toString().padStart(2, "0")}`;
-
-      const viewsLeftEl = document.getElementById("viewsLeft");
-      viewsLeftEl.innerText = viewsLeft.toLocaleString();
-      viewsLeftEl.className = forecast === "Yes" ? "green" : "red";
-
-      updateSpikeList(currentTime, viewCount, viewsLeft);
-      updateRiskMeter(avg15, requiredRate);
-    })
-    .catch(error => console.error("Error fetching YouTube data:", error));
-}
-
-function getViewDiff(pointsBack) {
-  const idx = chartData.length - pointsBack;
-  return idx >= 0 ? chartData[chartData.length - 1] - chartData[idx] : 0;
-}
-
-function updateRiskMeter(avgRate, requiredRate) {
-  if (requiredRate === 0) {
-    document.getElementById("riskText").innerText = "Super Safe (∞%)";
-    document.getElementById("riskBarFill").style.width = "100%";
-    document.getElementById("riskBarFill").style.backgroundColor = "green";
-    return;
-  }
-
-  const percentage = (avgRate / requiredRate) * 100;
-  const fill = Math.min(percentage, 100);
-  let text = "";
-  let color = "";
-
-  if (percentage <= 10) {
-    text = `Very Risky (${percentage.toFixed(1)}%)`;
-    color = "red";
-  } else if (percentage <= 30) {
-    text = `Risky (${percentage.toFixed(1)}%)`;
-    color = "orange";
-  } else if (percentage <= 50) {
-    text = `Moderate (${percentage.toFixed(1)}%)`;
-    color = "gold";
-  } else if (percentage <= 70) {
-    text = `Safe (${percentage.toFixed(1)}%)`;
-    color = "lightgreen";
-  } else if (percentage <= 100) {
-    text = `Very Safe (${percentage.toFixed(1)}%)`;
-    color = "green";
-  } else {
-    text = `Super Safe (${percentage.toFixed(1)}%)`;
-    color = "darkgreen";
-  }
-
-  document.getElementById("riskText").innerText = text;
-  const bar = document.getElementById("riskBarFill");
-  bar.style.width = `${fill}%`;
-  bar.style.backgroundColor = color;
 }
